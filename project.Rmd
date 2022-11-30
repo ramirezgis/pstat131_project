@@ -1,0 +1,63 @@
+---
+title: "Building a Hotel Booking Cancellation Prediction Model"
+subtitle: "Using Machine Learning Models to Predict Whether a Hotel Guest would Cancel their Hotel Booking"
+author: "Giselle Ramirez"
+subtitle: "UCSB Fall 2022"
+output: html_document
+date: "2022-12-06"
+---
+
+![](hotelbookingpic.jpg)
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Introduction
+
+The purpose of this project is to build machine learning models that can accurately predict whether a hotel guest would cancel their hotel booking. The data that would be used is from 'hotel_booking', and I will build different models that would most accurately predict the binary regression problem.
+
+**Packages used:**
+
+```{r}
+library(tidymodels)
+library(tidyverse)
+library(dplyr)
+library(corrr)
+library(corrplot)
+library(ggplot2)
+library(discrim)
+library(klaR)
+library(glmnet)
+library(ISLR)
+library(rpart.plot)
+library(vip)
+library(randomForest)
+library(xgboost)
+library(ranger)
+library(tidyr)
+library(janitor)
+library(knitr)
+library(MASS)
+library(vembedr)
+library(yardstick)
+tidymodels_prefer()
+```
+
+## Hotel Booking Process
+
+Guests from all over the world are visiting hotels for different reasons. It could range to personal vacation ventures to business trips. In order to book a hotel, the guest must provide information about themselves and what kind of booking they are looking for. For example, they need to provide information on what day and how long they are looking to book the room(s). Also, who is coming along with them, along with other personal information they are looking to get from the hotel, such as parking and special accommodations. Hotels keep track of this and save the guest the room they asked for. However, there are times for any reason where hotel guests cancel their reservation. Hotels, in this case, must cancel the booking for the guest.
+
+\<insert hotel booking process video\>
+
+## **Why is this model important?**
+
+In this dataset, we are exploring only two hotels: Resort Hotel and City Hotel, which are the closest hotels in the area. In order to keep track of what the guests are bringing into the hotel,
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
