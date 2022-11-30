@@ -17,7 +17,55 @@ knitr::opts_chunk$set(echo = TRUE)
 
 The purpose of this project is to build machine learning models that can accurately predict whether a hotel guest would cancel their hotel booking. The data that would be used is from 'hotel_booking', and I will build different models that would most accurately predict the binary regression problem.
 
-**Packages used:**
+## Hotel Booking Process
+
+Guests from all over the world are visiting hotels for different reasons. It could range to personal vacation ventures to business trips. In order to book a hotel, the guest must provide information about themselves and what kind of booking they are looking for. For example, they need to provide information on what day and how long they are looking to book the room(s). Also, who is coming along with them, along with other personal information they are looking to get from the hotel, such as parking and special accommodations. Hotels keep track of this and save the guest the room they asked for. However, there are times for any reason where hotel guests cancel their reservation. Hotels, in this case, must cancel the booking for the guest.
+
+```{r}
+library(vembedr)
+embed_youtube("oUv2BcxAvjQ")
+```
+
+## **Why is this model important?**
+
+In this dataset, we are exploring only two hotels: Resort Hotel and City Hotel, which are the closest hotels in the area. In order to keep track of when and if hotel guests will check in, it's important to keep track of hotel booking cancellations. Also, we need to see if certain guest traits will have a higher chance of cancellation so that hotels can be prepared just in case there might be a cancellation.
+
+## **Project Roadmap** 
+
+\<insert what models were used\>
+
+## Exploratory Data Analysis
+
+We need to clean up the data and choose our important variables that are relevant to predicting hotel booking cancellation.
+
+### Loading Packages and Data
+
+The dataset was found on Kaggle from Jeese Mostipak, but the [hotel_booking](https://www.kaggle.com/datasets/jessemostipak/hotel-booking-demand) dataset was originally found from an article "Hotel Booking Demand Datasets" by Nuno Antonio, Ana Almedia, and Luis Nunes 2018. The original dataset contains 119390 observations/guests with 32 variables.
+
+However, I will only use the variables that I believe are relevant to predicting hotel booking cancellations:
+
+-   hotel: Which hotel --\> H1 = Resort Hotel or H2 = City Hotel
+-   is_canceled: Whether hotel guest cancelled (1) or didn't cancel (0)
+-   lead_time: Number of days hotel guest booked reservation in advance
+-   arrival_date_year: Year of arrival
+-   arrival_date_month: Month of arrival
+-   arrival_date_week: Week of arrival (out of 52 weeks in a year)
+-   arrival_date_day_of_month: Number of day in a Month
+-   stays_in_weekend_nights: How many weekend nights (Saturday and Sunday) hotel guest stayed over
+-   stays_in_week_nights: How many week nights (Monday to Friday)
+-   adults: Number of adults checking in
+-   children: Number of children checking in
+-   babies: Number of babies checking in
+-   meal: Type of meal package ordered (Undefined/SC - no meal package, BB - Bed and Breakfast, HB - Half board (two meals a day), FB - Full board (three meals a day))
+-   country: Which country guest comes from (format: ISO 3155-3:2013), e.g. PRT = Portugal
+-   market_segment: How people ordered their hotel booking (Online TA (Travel Agent), Offline TA/TO (Tour Operator), Direct, Corporate, Complementary, Groups, Undefined, Aviation)
+-   distribution_channel: How booking was reserved (Direct, Corporate, TA/TO, Undefined, GDS)
+-   is_repeated_guest: Not the first time the hotel guest made another hotel booking (1) or first time hotel guest (0)
+-   previous_cancellations: Number of previous cancellations by guest before current hotel booking
+-   previous_booking_not_cancelled: Number of previous hotel bookings by guest NOT CANCELLED before current hotel booking
+-   reserved_room_type: Type of room reserved (C, A, D, E, G, F, H, L, P, B)
+-   `assigned_room_type`: Type of room assigned (may differ due to overbooking or room upgrades) (C, A, D, E, G, F, H, L, P, B, I, K)
+-   `booking_changes`:
 
 ```{r}
 library(tidymodels)
@@ -42,22 +90,13 @@ library(MASS)
 library(vembedr)
 library(yardstick)
 tidymodels_prefer()
+
 ```
 
-## Hotel Booking Process
+drop: company, adults, babies, children, deposit_type, reservation_status_date, total_nights, arrivial_date_week_number, stays_in_weekend_nights, arrivial_date_month, agent, arrivial_date_week_number, statys_in_weekend_nights, arrivial_date_month,
 
-Guests from all over the world are visiting hotels for different reasons. It could range to personal vacation ventures to business trips. In order to book a hotel, the guest must provide information about themselves and what kind of booking they are looking for. For example, they need to provide information on what day and how long they are looking to book the room(s). Also, who is coming along with them, along with other personal information they are looking to get from the hotel, such as parking and special accommodations. Hotels keep track of this and save the guest the room they asked for. However, there are times for any reason where hotel guests cancel their reservation. Hotels, in this case, must cancel the booking for the guest.
+drop: children, adults, and babies (that are all this at same time)
 
-\<insert hotel booking process video\>
+days_in_waiting_list, arrivial_date_year, arrival_date_year, assigned_room_type, booking changes, reservation_status, country, days_in_waiting_list,
 
-## **Why is this model important?**
-
-In this dataset, we are exploring only two hotels: Resort Hotel and City Hotel, which are the closest hotels in the area. In order to keep track of what the guests are bringing into the hotel,
-
-You can also embed plots, for example:
-
-```{r pressure, echo=FALSE}
-plot(pressure)
-```
-
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+reservation_status_date (after saving year, month, and day separately), arrival_date_month
