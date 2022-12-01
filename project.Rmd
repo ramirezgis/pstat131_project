@@ -30,7 +30,7 @@ embed_youtube("oUv2BcxAvjQ")
 
 In this dataset, we are exploring only two hotels: Resort Hotel and City Hotel, which are the closest hotels in the area. In order to keep track of when and if hotel guests will check in, it's important to keep track of hotel booking cancellations. Also, we need to see if certain guest traits will have a higher chance of cancellation so that hotels can be prepared just in case there might be a cancellation.
 
-## **Project Roadmap** 
+## **Project Roadmap**
 
 \<insert what models were used\>
 
@@ -42,7 +42,7 @@ We need to clean up the data and choose our important variables that are relevan
 
 The dataset was found on Kaggle from Jeese Mostipak, but the [hotel_booking](https://www.kaggle.com/datasets/jessemostipak/hotel-booking-demand) dataset was originally found from an article "Hotel Booking Demand Datasets" by Nuno Antonio, Ana Almedia, and Luis Nunes 2018. The original dataset contains 119390 observations/guests with 32 variables.
 
-However, I will only use the variables that I believe are relevant to predicting hotel booking cancellations:
+However, I will only use the variables that I believe are relevant to predicting hotel booking cancellations. In our case, is_canceled is our response variable, while the other variables are the predictors:
 
 -   hotel: Which hotel --\> H1 = Resort Hotel or H2 = City Hotel
 -   is_canceled: Whether hotel guest cancelled (1) or didn't cancel (0)
@@ -65,7 +65,19 @@ However, I will only use the variables that I believe are relevant to predicting
 -   previous_booking_not_cancelled: Number of previous hotel bookings by guest NOT CANCELLED before current hotel booking
 -   reserved_room_type: Type of room reserved (C, A, D, E, G, F, H, L, P, B)
 -   `assigned_room_type`: Type of room assigned (may differ due to overbooking or room upgrades) (C, A, D, E, G, F, H, L, P, B, I, K)
--   `booking_changes`:
+-   `booking_changes`: Number of hotel booking changes when room(s) were booked until checkout
+-   deposit_type: If hotel guest left deposit ("No Deposit" - none made, "Refundable" - deposit made was worth less of hotel stay, "Non Refund" - deposit made was made of entire hotel stay cost)
+-   agent: Identification of travel agency that reserved hotel booking for guest
+-   company: Identification of company that made booking
+-   days_in_waiting_list: Number of days on waitlist before getting accepted to a hotel booking reservation
+-   customer_type: Type of booking made (Transient - short and urgent booking for individual, Contract - signed contract for long stay booking, Transient-Party - short and urgent booking for a group, Group - booking for a group)
+-   adr: Average Daily Rate (total cost of booking divided by number of days)
+-   required_car_parking_spaces: Number of car parking spaces reserved by hotel guest
+-   total_of_special_request: Number of total special requests made by hotel guest
+-   reservation_status: Final reservation status (Check-Out - Hotel guest checked in and left at end of reservation booking, Canceled - hotel booking cancelled, No-Show - never showed up)
+-   reservation_status_date: Date of final reservation status
+
+### Libraries and Dataset Cleaning
 
 ```{r}
 library(tidymodels)
@@ -90,6 +102,60 @@ library(MASS)
 library(vembedr)
 library(yardstick)
 tidymodels_prefer()
+hotel_booking <- read.csv("hotel_bookings.csv")
+set.seed(1234)
+hotel_booking %>%
+  head()
+```
+
+Let's see the dimensions of this dataset.
+
+```{r}
+dim(hotel_booking)
+```
+
+So we have 119390 individuals that booked hotel reservations and 32 original variables.
+
+Let's see which variables have missing values so that we could remove the ones that have over 40% missing
+
+```{r}
+numeric_book <- unlist(lapply(hotel_booking, is.integer))
+data_num <- hotel_booking[, numeric_book]
+#data_num
+(colMeans(is.na(data_num))) *100
+
+character_book <- unlist(lapply(hotel_booking, is.character))
+data_chara <- hotel_booking[, character_book]
+(colMeans(is.null(data_chara))) * 100
+sum(is.na(hotel_booking$children)) #4 missing
+
+#count by group
+
+null_country <- data_chara %>%
+  group_by(country) %>%
+  summarize(n()) %>%
+  filter(country == "NULL") %>%
+  select('n()')
+null_country #488
+
+null_agent <- data_chara %>%
+  group_by(agent) %>%
+  summarize(n()) %>%
+  filter(agent == "NULL") %>%
+  select('n()')
+null_agent #16340
+
+null_comp <- data_chara %>%
+  group_by(company) %>%
+  summarize(n()) %>%
+  filter(company == "NULL") %>%
+  select('n()')
+null_comp #112593
+
+
+```
+
+```{r}
 
 ```
 
