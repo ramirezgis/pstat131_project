@@ -2,9 +2,16 @@
 title: "Building a Hotel Booking Cancellation Prediction Model"
 subtitle: "Using Machine Learning Models to Predict Whether a Hotel Guest would Cancel their Hotel Booking"
 author: "Giselle Ramirez"
-subtitle: "UCSB Fall 2022"
-output: html_document
+output: 
+  html_document:
+    code_folding: hide
+subtitle: "FALL 2022"
 date: "2022-12-06"
+execute:
+  message: false
+  warning: false
+  echo: false
+  cache: true
 ---
 
 ![](hotelbookingpic.jpg)
@@ -44,7 +51,7 @@ The dataset was found on Kaggle from Jeese Mostipak, but the [hotel_booking](htt
 
 However, I will only use the variables that I believe are relevant to predicting hotel booking cancellations. In our case, is_canceled is our response variable, while the other variables are the predictors:
 
--   hotel: Which hotel --\> H1 = Resort Hotel or H2 = City Hotel
+-   hotel: Which hotel --\> Resort Hotel or City Hotel
 -   is_canceled: Whether hotel guest cancelled (1) or didn't cancel (0)
 -   lead_time: Number of days hotel guest booked reservation in advance
 -   arrival_date_year: Year of arrival
@@ -79,7 +86,7 @@ However, I will only use the variables that I believe are relevant to predicting
 
 ### Libraries and Dataset Cleaning
 
-```{r}
+```{r include=FALSE, results=}
 library(tidymodels)
 library(tidyverse)
 library(dplyr)
@@ -100,9 +107,13 @@ library(janitor)
 library(knitr)
 library(MASS)
 library(vembedr)
+library(poissonreg)
 library(yardstick)
 tidymodels_prefer()
-hotel_booking <- read.csv("hotel_bookings.csv")
+```
+
+```{r}
+hotel_booking <- read.csv("hotel_bookings.csv") 
 set.seed(1234)
 hotel_booking %>%
   head()
@@ -116,7 +127,7 @@ dim(hotel_booking)
 
 So we have 119390 individuals that booked hotel reservations and 32 original variables.
 
-Let's see which variables have missing values so that we could remove the ones that have over 40% missing
+Let's see which variables have missing values so that we could replace null values with 0 or unknown. And make sure there is at least one person per hotel booking (so children, adults, and babies cannot be all 0).
 
 ```{r}
 numeric_book <- unlist(lapply(hotel_booking, is.integer))
@@ -126,7 +137,7 @@ data_num <- hotel_booking[, numeric_book]
 
 character_book <- unlist(lapply(hotel_booking, is.character))
 data_chara <- hotel_booking[, character_book]
-(colMeans(is.null(data_chara))) * 100
+
 sum(is.na(hotel_booking$children)) #4 missing
 
 #count by group
@@ -151,15 +162,124 @@ null_comp <- data_chara %>%
   filter(company == "NULL") %>%
   select('n()')
 null_comp #112593
-
-
 ```
+
+Based on the code, we see that there are some missing values for children (4), country (488), agent (16340), and company (112593). Due to this, we will fill in 0 for children, agent, and company, and fill in 'UNK' as unknown for country. We will also filter out any hotel room bookings that have zero adults, children, and babies.
 
 ```{r}
-
+hotel_booking$children[is.na(hotel_booking$children)] <- 0
+hotel_booking$agent <- hotel_booking$agent %>% replace(.=="NULL", "0") 
+hotel_booking$company <- hotel_booking$company %>% replace(.=="NULL", "0") 
+hotel_booking$country <- hotel_booking$country %>% replace(.=="NULL", "UNK") 
+hotel_booking <- hotel_booking %>%
+  filter((adults > 0 & babies == 0 & children == 0) |
+           (adults == 0 & babies>0 & children == 0) |
+           (adults == 0 & babies == 0 & children > 0) |
+           (adults >0 | babies >0 | children >0))
+head(hotel_booking)
 ```
 
-drop: company, adults, babies, children, deposit_type, reservation_status_date, total_nights, arrivial_date_week_number, stays_in_weekend_nights, arrivial_date_month, agent, arrivial_date_week_number, statys_in_weekend_nights, arrivial_date_month,
+Also, I want to make some character variables into numerical variables that I can analyze better. and separate reservation_status_date into year, month, and day in order to analyze the updated date of the hotel booking reservation. I will also factor variables that have levels in order:
+
+```{r}
+#ignore warning please
+data_chara <- hotel_booking[, unlist(lapply(hotel_booking, is.character))]
+colnames(data_chara) #character variables 
+#(not include country, agent, company, and reservation_status_date since #there's a lot of unique values for these variables)
+list_unique <- data_chara %>%
+  select(-country, -agent, -company, -reservation_status_date) %>%
+  lapply(unique)
+  
+hotel_booking <- hotel_booking %>%
+  mutate(
+    hotel = recode(hotel, 'Resort Hotel' = 0, 'City Hotel' = 1),
+    arrival_date_month = recode(arrival_date_month, "January" = 1, 
+                                "February" = 2, "March" = 3, 
+                                "April" = 4, "May" = 5, "June" = 6, 
+                                "July" = 7,"August" = 8, "September" = 9, 
+                                "October" = 10, "November" = 11, 
+                                "December" = 12),
+    meal = recode(meal, "Undefined" = 0, "SC" = 1, "BB" = 2, "HB" = 3, 
+                  "FB" = 4), 
+    market_segment = recode(market_segment, "Direct" = 0, "Corporate" = 1, 
+                            "Online TA" = 2, "Offline TA/TO" = 3, 
+                            "complementary" = 4, "Groups" = 5, 
+                            "Aviation" = 6, "Undefined" = 7), 
+    distribution_channel = recode(distribution_channel, "Direct" = 0, 
+                                  "Corporate" = 1, "TA/TO" = 2, 
+                                  "Undefined" = 3, "GDS" = 4), 
+    reserved_room_type = recode(reserved_room_type, "C" = 0, "A" = 1, 
+                                "D" = 2, "E" = 3, "G" = 4, "F" = 5, 
+                                "H" = 6, "L" = 7, "B" = 8), 
+    assigned_room_type = recode(assigned_room_type, "C" = 0, "A" = 1, 
+                                "D" = 2, "E" = 3, "G" = 4, "F" = 5, 
+                                "I" = 6, "B" = 7, "H" = 8, "L" = 9, 
+                                "K" = 10), 
+    deposit_type = recode(deposit_type, "No Deposit" = 0, "Refundable" = 1, 
+                          "Non Refund" = 2), 
+    customer_type = recode(customer_type, "Transient" = 0, "Contract" = 1, 
+                           "Transient-Party" = 2, "Group" = 3), 
+    reservation_status = recode(reservation_status, "Check-Out" = 0, 
+                                "Canceled" = 1, "No-Show" = 2)) %>% 
+  separate(reservation_status_date, c("latest_year", "latest_month", 
+                                      "latest_day")) %>% 
+  mutate(
+    hotel = factor(hotel), 
+    meal = factor(meal), 
+    market_segment = factor(market_segment), 
+    distribution_channel = factor(distribution_channel), 
+    reserved_room_type = factor(reserved_room_type), 
+    assigned_room_type = factor(assigned_room_type), 
+    deposit_type = factor(deposit_type), 
+    customer_type = factor(customer_type), 
+    reservation_status = factor(reservation_status), 
+    is_canceled = factor(is_canceled),
+    is_repeated_guest = factor(is_repeated_guest)
+  )
+
+head(hotel_booking)
+```
+
+## Testing and Training Datasets
+
+Now our data is cleaned up and organized enough to do some EDA with our testing and training sets.
+
+First, let's split our data to our testing and training sets with 80% training and 20% testing.
+
+```{r}
+booking_split <- hotel_booking %>%
+  initial_split(prop = 0.8, strata = "is_canceled")
+
+booking_train <- training(booking_split)
+booking_test <- testing(booking_split)
+```
+
+The training set has around 95367 observations, while the testing set has around 23843 observations. Observations in this case are hotel bookings.
+
+Now, let's explore the distribution of the outcome variable called is_canceled.
+
+```{r}
+booking_train %>%
+  ggplot(aes(x = is_canceled)) +
+  geom_bar()
+```
+
+As we see here, in our training set, we see that many hotel guests aren't canceling their hotel booking, which is marked by 0 and about 35000 hotel guests end up canceling their reservations.
+
+I also want to see the correlation of all numeric continuous variables to see if they have relations with one another.
+
+```{r}
+booking_train %>%
+  select_if(is.numeric) %>%
+  select(-arrival_date_day_of_month, -babies, -booking_changes, -days_in_waiting_list, -required_car_parking_spaces) %>%
+  cor(use = "complete.obs") %>%
+  corrplot(order= "original", diag = FALSE)
+#original, AOE, FPC, hclust, alphabet
+```
+
+I removed some numeric variables that had almost zero correlation with the rest of the numeric variables.
+
+drop: company, adults, babies, children, deposit_type, reservation_status_date, total_nights, arrival_date_week_number, stays_in_weekend_nights, arrival_date_month, agent, arrival_date_week_number, stays_in_weekend_nights, arrival_date_month,
 
 drop: children, adults, and babies (that are all this at same time)
 
