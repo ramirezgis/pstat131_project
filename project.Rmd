@@ -275,14 +275,59 @@ booking_train %>%
   cor(use = "complete.obs") %>%
   corrplot(order= "original", diag = FALSE)
 #original, AOE, FPC, hclust, alphabet
+
 ```
 
-I removed some numeric variables that had almost zero correlation with the rest of the numeric variables.
+```{r}
+booking_train %>%
+  select_if(is.integer) %>%
+  select(-arrival_date_day_of_month, -babies, -booking_changes, -days_in_waiting_list, -required_car_parking_spaces) %>%
+  cor() %>%
+  corrplot(order= "AOE", col = COL2("PiYG"), diag = FALSE)
+
+```
+
+```{r}
+set.seed(1234)
+corr_here <- cor(hotel_booking)
+```
+
+```{booking_train %>%}
+  #select_if(is.factor) %>%
+  cor() 
+  #corrplot(order= "AOE", col = COL2("PiYG"), diag = FALSE)
+```
+
+I removed some numeric variables that had almost zero correlation with the rest of the numeric variables, which were arrival_date_day_of_month, babies, booking_changes, days_in_waiting_list, and required_car_parking_spaces. I will remove these variables for the recipe later as they are don't have much correlation with each other. As seen here, we see that arrival_date_month and arrival_date_week_number have a very strong positive correlation. This makes sense as when the months go by, so will the weeks. The variables stays_in_week_nights and stays_in_weekend_nights also had a moderate positive correlation, which also makes sense as there are some people that would stay a mix of weekday and weekend nights.
+
+There is also a strong negative correlation between arrival_date_month and arrival_date_year and arrival_date_week_number with arrival_date_year. Both of these relations are interesting, because they suggest that there are more booking towards the later months/weeks of the year.
+
+Let's do a histogram to see if this is true that there is more bookings towards the end of the year for the training set.
+
+```{r}
+month_book <- hotel_booking %>%
+  count(arrival_date_month, hotel)
+month_book
+
+ggplot(month_book, aes(x = arrival_date_month, y = n, fill = hotel)) + 
+  geom_bar(stat = "identity", position = 'dodge')
+```
+
+As we can see in the barchart above, from January to August, the hotel booking seems to increase and decreases as it approaches December for Resort Hotel (hotel = 0). However, for City Hotel (hotel = 1), the hotel booking seems to stay around the same, only peaking around August.
+
+Now, that I saw the overall pattern of our hotel_booking dataset, lets set up our models!
+
+### Making our Recipes
+
+```{r}
+ggplot(month_book, aes(x = arrival_date_month, y = n, fill = hotel)) + 
+  geom_bar(stat = "identity", position = 'dodge') 
+```
 
 drop: company, adults, babies, children, deposit_type, reservation_status_date, total_nights, arrival_date_week_number, stays_in_weekend_nights, arrival_date_month, agent, arrival_date_week_number, stays_in_weekend_nights, arrival_date_month,
 
 drop: children, adults, and babies (that are all this at same time)
 
-days_in_waiting_list, arrivial_date_year, arrival_date_year, assigned_room_type, booking changes, reservation_status, country, days_in_waiting_list,
+days_in_waiting_list, arrival_date_year, arrival_date_year, assigned_room_type, booking changes, reservation_status, country, days_in_waiting_list,
 
 reservation_status_date (after saving year, month, and day separately), arrival_date_month
