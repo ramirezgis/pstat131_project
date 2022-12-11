@@ -320,6 +320,20 @@ Let's first start off with building a logistic regression.
 
 ### Logistic Regression
 
+First we need to build a logistic regression model with a workflow.
+
+```{r}
+log_reg <- logistic_reg() %>%
+  set_engine("glm") %>%
+  set_mode("classification")
+
+log_wkflow <- workflow() %>%
+  add_model(log_reg) %>%
+  add_recipe(booking_recipe)
+
+log_fit <- fit(log_wkflow, booking_train)
+```
+
 drop: company, adults, babies, children, deposit_type, reservation_status_date, total_nights, arrival_date_week_number, stays_in_weekend_nights, arrival_date_month, agent, arrival_date_week_number, stays_in_weekend_nights, arrival_date_month,
 
 drop: children, adults, and babies (that are all this at same time)
