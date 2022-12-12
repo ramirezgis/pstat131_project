@@ -54,35 +54,35 @@ However, I will only use the variables that I believe are relevant to predicting
 -   `hotel`: Which hotel --\> Resort Hotel or City Hotel
 -   `is_canceled`: Whether hotel guest cancelled (1) or didn't cancel (0)
 -   `lead_time`: Number of days hotel guest booked reservation in advance
--   arrival_date_year: Year of arrival
--   arrival_date_month: Month of arrival
--   arrival_date_week: Week of arrival (out of 52 weeks in a year)
--   arrival_date_day_of_month: Number of day in a Month
--   stays_in_weekend_nights: How many weekend nights (Saturday and Sunday) hotel guest stayed over
--   stays_in_week_nights: How many week nights (Monday to Friday)
--   adults: Number of adults checking in
--   children: Number of children checking in
--   babies: Number of babies checking in
--   meal: Type of meal package ordered (Undefined/SC - no meal package, BB - Bed and Breakfast, HB - Half board (two meals a day), FB - Full board (three meals a day))
--   country: Which country guest comes from (format: ISO 3155-3:2013), e.g. PRT = Portugal
--   market_segment: How people ordered their hotel booking (Online TA (Travel Agent), Offline TA/TO (Tour Operator), Direct, Corporate, Complementary, Groups, Undefined, Aviation)
--   distribution_channel: How booking was reserved (Direct, Corporate, TA/TO, Undefined, GDS)
--   is_repeated_guest: Not the first time the hotel guest made another hotel booking (1) or first time hotel guest (0)
--   previous_cancellations: Number of previous cancellations by guest before current hotel booking
--   previous_booking_not_cancelled: Number of previous hotel bookings by guest NOT CANCELLED before current hotel booking
--   reserved_room_type: Type of room reserved (C, A, D, E, G, F, H, L, P, B)
+-   `arrival_date_year`: Year of arrival
+-   `arrival_date_month`: Month of arrival
+-   `arrival_date_week`: Week of arrival (out of 52 weeks in a year)
+-   `arrival_date_day_of_month`: Number of day in a Month
+-   `stays_in_weekend_nights`: How many weekend nights (Saturday and Sunday) hotel guest stayed over
+-   `stays_in_week_nights`: How many week nights (Monday to Friday)
+-   `adults`: Number of adults checking in
+-   `children`: Number of children checking in
+-   `babies`: Number of babies checking in
+-   `meal`: Type of meal package ordered (Undefined/SC - no meal package, BB - Bed and Breakfast, HB - Half board (two meals a day), FB - Full board (three meals a day))
+-   `country`: Which country guest comes from (format: ISO 3155-3:2013), e.g. PRT = Portugal
+-   `market_segment`: How people ordered their hotel booking (Online TA (Travel Agent), Offline TA/TO (Tour Operator), Direct, Corporate, Complementary, Groups, Undefined, Aviation)
+-   `distribution_channel`: How booking was reserved (Direct, Corporate, TA/TO, Undefined, GDS)
+-   `is_repeated_guest`: Not the first time the hotel guest made another hotel booking (1) or first time hotel guest (0)
+-   `previous_cancellations:` Number of previous cancellations by guest before current hotel booking
+-   `previous_booking_not_canceled`: Number of previous hotel bookings by guest NOT CANCELLED before current hotel booking
+-   `reserved_room_type`: Type of room reserved (C, A, D, E, G, F, H, L, P, B)
 -   `assigned_room_type`: Type of room assigned (may differ due to overbooking or room upgrades) (C, A, D, E, G, F, H, L, P, B, I, K)
 -   `booking_changes`: Number of hotel booking changes when room(s) were booked until checkout
--   deposit_type: If hotel guest left deposit ("No Deposit" - none made, "Refundable" - deposit made was worth less of hotel stay, "Non Refund" - deposit made was made of entire hotel stay cost)
--   agent: Identification of travel agency that reserved hotel booking for guest
--   company: Identification of company that made booking
--   days_in_waiting_list: Number of days on waitlist before getting accepted to a hotel booking reservation
--   customer_type: Type of booking made (Transient - short and urgent booking for individual, Contract - signed contract for long stay booking, Transient-Party - short and urgent booking for a group, Group - booking for a group)
--   adr: Average Daily Rate (total cost of booking divided by number of days)
--   required_car_parking_spaces: Number of car parking spaces reserved by hotel guest
--   total_of_special_request: Number of total special requests made by hotel guest
--   reservation_status: Final reservation status (Check-Out - Hotel guest checked in and left at end of reservation booking, Canceled - hotel booking cancelled, No-Show - never showed up)
--   reservation_status_date: Date of final reservation status
+-   `deposit_type`: If hotel guest left deposit ("No Deposit" - none made, "Refundable" - deposit made was worth less of hotel stay, "Non Refund" - deposit made was made of entire hotel stay cost)
+-   `agent`: Identification of travel agency that reserved hotel booking for guest
+-   `company`: Identification of company that made booking
+-   `days_in_waiting_list`: Number of days on waitlist before getting accepted to a hotel booking reservation
+-   `customer_type`: Type of booking made (Transient - short and urgent booking for individual, Contract - signed contract for long stay booking, Transient-Party - short and urgent booking for a group, Group - booking for a group)
+-   `adr`: Average Daily Rate (total cost of booking divided by number of days)
+-   `required_car_parking_spaces:` Number of car parking spaces reserved by hotel guest
+-   `total_of_special_request`: Number of total special requests made by hotel guest
+-   `reservation_status:` Final reservation status (Check-Out - Hotel guest checked in and left at end of reservation booking, Canceled - hotel booking cancelled, No-Show - never showed up)
+-   `reservation_status_date`: Date of final reservation status
 
 ### Libraries and Dataset Cleaning
 
@@ -299,7 +299,7 @@ Now, that I saw the overall pattern of our hotel_booking dataset, lets set up ou
 
 ### Making our Recipes
 
-Now that we built our training and testing sets and observing if there is any correlation within the variables, we need to build a recipe that would be essential in building our models. I excluded variables that had almost no correlation with other variables (which include: `arrival_date_day_of_month`, `babies`, `booking_changes`, `days_in_waiting_list`, `required_car_parking_spaces`), had over 10% missing variables (`agent` and `company`). I also excluded variables that have an almost 100% correlation with the variable `is_canceled` , which are `reservation_status` (detail if the person did check in with the hotel or not), `assigned_room_type` (applies to people who have checked in who changed their room), `booking_changes` (number of changes made to the room once checked in), and `days_in_waiting_list` (confirmed booking). So in total, we will use only 25 of the predictor variables.
+Now that we built our training and testing sets and observing if there is any correlation within the variables, we need to build a recipe that would be essential in building our models. I excluded variables that had almost no correlation with other variables (which include: `arrival_date_day_of_month`, `babies`, `booking_changes`, `days_in_waiting_list`, `required_car_parking_spaces`), had over 10% missing variables (`agent` and `company`). I also excluded variables that have an almost 100% correlation with the variable `is_canceled` , which are `reservation_status` (detail if the person did check in with the hotel or not), `assigned_room_type` (applies to people who have checked in who changed their room), `booking_changes` (number of changes made to the room once checked in), `days_in_waiting_list` (confirmed booking), etc. So in total, we will use only 20 of the predictor variables.
 
 ```{r}
 booking_recipe <- recipe(is_canceled ~ hotel + arrival_date_week_number + stays_in_weekend_nights + stays_in_week_nights + adults + children + meal + market_segment + distribution_channel + is_repeated_guest + previous_cancellations + previous_bookings_not_canceled + reserved_room_type + deposit_type + customer_type + adr + required_car_parking_spaces + latest_year + latest_month + latest_day, data = booking_train) %>%
@@ -310,7 +310,7 @@ booking_recipe <- recipe(is_canceled ~ hotel + arrival_date_week_number + stays_
 
 ### K-Fold Cross Validation
 
-Now we are going to use cross-validation to fold the training set as a stratified cross-validation with repeats.
+Now we are going to use cross-validation to fold the training set as a stratified cross-validation with repeats. We are using 10 folds.
 
 ```{r}
 booking_folds <- vfold_cv(booking_train, v = 10, strata = is_canceled)
@@ -318,13 +318,13 @@ booking_folds <- vfold_cv(booking_train, v = 10, strata = is_canceled)
 
 ## Model Building
 
-Now it is time to build our models! We will use roc_auc as a metric set across our models to see which is our best model. Our models are logistic regression, LDA, QDA, and a decision tree for this binary classification problem.
+Now it is time to build our models! We will use roc_auc as a metric set across our models to see which is our best model. Our models are logistic regression, linear discriminant analysis, decision tree, and a boosted tree for this binary classification problem.
 
 Let's first start off with building a logistic regression.
 
 ### Logistic Regression
 
-First we need to build a logistic regression model with a workflow.
+First we need to build a logistic regression model with a workflow. Then, we need to fit it to our folds!
 
 ```{r}
 log_reg <- logistic_reg() %>%
@@ -346,6 +346,8 @@ We see that log_fit has a roc_auc of BLANK. This is pretty high! Let's see for o
 
 ### Linear Discriminant Analysis
 
+First, we need to see
+
 ```{r}
 control <- control_resamples(save_pred = TRUE)
 lda_mod <- discrim_linear() %>% 
@@ -358,7 +360,8 @@ lda_wkflow <- workflow() %>%
 
 lda_fit <- fit_resamples(resamples = booking_folds, 
                          lda_wkflow, control = control)
-collect_metrics(lda_fit)
+collect_metrics(lda_fit) %>%
+  filter(.metric == roc_auc)
 ```
 
 We see that lda_fit has a roc_auc of BLANK. Compared to log_reg, this is BLANK.
@@ -400,6 +403,59 @@ decision_roc
 ```
 
 We see that we have a roc_auc of 0.88673 of our best performing decision tree on the folds! This is higher than our LDA and linear regression!
+
+Now let's see for nearest neighbors model if it's better than our decision tree.
+
+### Nearest Neighbor (KNN)
+
+```{r}
+knn_model <- 
+  nearest_neighbor(
+    neighbors = tune(),
+    mode = "classification") %>% 
+  set_engine("kknn")
+
+knn_workflow <- workflow() %>% 
+  add_model(knn_model) %>% 
+  add_recipe(booking_recipe)
+
+# set-up tuning grid ----
+knn_params <- parameters(knn_model)
+param_grid <- grid_regular(cost_complexity(range = c(-3, -1)), levels = 10)
+
+# define grid
+knn_grid <- grid_regular(knn_params, levels = 10)
+
+knn <- tune_grid(
+    knn_workflow,
+    resamples = booking_folds,
+    grid = knn_grid,
+    metrics = metric_set(roc_auc)
+    )
+```
+
+boosted tree model
+
+```{r}
+boost_spec <- boost_tree() %>%
+  set_engine("xgboost") %>%
+  set_mode("classification") %>%
+  set_args(trees = tune())
+
+boost_wf <- workflow() %>%
+  add_model(boost_spec) %>%
+  add_recipe(booking_recipe) 
+
+param_grid2 <- grid_regular(trees(range = c(10, 2000)), levels = 10)
+
+boosted_tree <- tune_grid(
+  boost_wf, 
+  resamples = booking_folds, 
+  grid = param_grid2, 
+  metrics = metric_set(roc_auc)
+)
+autoplot(boosted_tree)
+```
 
 drop: company, adults, babies, children, deposit_type, reservation_status_date, total_nights, arrival_date_week_number, stays_in_weekend_nights, arrival_date_month, agent, arrival_date_week_number, stays_in_weekend_nights, arrival_date_month,
 
