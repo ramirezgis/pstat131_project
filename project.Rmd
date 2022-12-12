@@ -14,11 +14,13 @@ execute:
   cache: true
 ---
 
-![](hotelbookingpic.jpg)
+![]()
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
+
+![](images/hotel_booking_pic.jpg)
 
 ## Introduction
 
@@ -109,11 +111,13 @@ library(MASS)
 library(vembedr)
 library(poissonreg)
 library(yardstick)
+library(knitr)
+library(kknn)
 tidymodels_prefer()
 ```
 
 ```{r}
-hotel_booking <- read.csv("hotel_bookings.csv") 
+hotel_booking <- read.csv("data/hotel_bookings.csv") 
 set.seed(1234)
 hotel_booking %>%
   head()
@@ -310,10 +314,10 @@ booking_recipe <- recipe(is_canceled ~ hotel + arrival_date_week_number + stays_
 
 ### K-Fold Cross Validation
 
-Now we are going to use cross-validation to fold the training set as a stratified cross-validation with repeats. We are using 10 folds.
+Now we are going to use cross-validation to fold the training set as a stratified cross-validation with repeats. We are using 5 folds.
 
 ```{r}
-booking_folds <- vfold_cv(booking_train, v = 10, strata = is_canceled)
+booking_folds <- vfold_cv(booking_train, v = 5, strata = is_canceled)
 ```
 
 ## Model Building
@@ -339,14 +343,17 @@ log_fit <- fit_resamples(log_wkflow, booking_folds)
 ```
 
 ```{r}
-collect_metrics(log_fit)
+log_roc <- collect_metrics(log_fit) %>%
+  arrange(desc(mean)) %>%
+  slice(1)
+log_roc
 ```
 
-We see that log_fit has a roc_auc of BLANK. This is pretty high! Let's see for our next model of linear discriminant analysis.
+We see that log_fit has a roc_auc of 0.84401. This is pretty high! Let's see for our next model of linear discriminant analysis.
 
 ### Linear Discriminant Analysis
 
-First, we need to see
+First, we need to create a lda model with a workflow. Next, we find the fit for the lda using our folds from earlier. Then we see our roc_auc.
 
 ```{r}
 control <- control_resamples(save_pred = TRUE)
@@ -360,13 +367,20 @@ lda_wkflow <- workflow() %>%
 
 lda_fit <- fit_resamples(resamples = booking_folds, 
                          lda_wkflow, control = control)
-collect_metrics(lda_fit) %>%
-  filter(.metric == roc_auc)
 ```
 
-We see that lda_fit has a roc_auc of BLANK. Compared to log_reg, this is BLANK.
+```{r}
+lda_roc <- collect_metrics(lda_fit) %>%
+  arrange(desc(mean)) %>%
+  slice(1)
+lda_roc
+```
+
+We see that lda_fit has a roc_auc of 0.82643. Compared to log_reg, this is a bit lower roc_auc. So far log_fit looks to have the highest roc_auc so far! Let's look on our third model on decision tree!
 
 ### Decision Tree
+
+We also create a model on a decision tree and create a workflow that I would later apply to our folds from earlier.
 
 ```{r}
 tree_spec <- decision_tree() %>%
@@ -380,7 +394,7 @@ class_tree_wf <- workflow() %>%
   add_model(class_tree_spec) %>%
   add_recipe(booking_recipe)
 
-param_grid <- grid_regular(cost_complexity(range = c(-3, -1)), levels = 10)
+param_grid <- grid_regular(cost_complexity(range = c(-3, -1)), levels = 5)
 
 decision_tree <- tune_grid(
   class_tree_wf,
@@ -392,7 +406,7 @@ decision_tree <- tune_grid(
 autoplot(decision_tree)
 ```
 
-ANALYZE NOW. Now let's see the roc_auc of our best decision tree.
+As seen here, after 0.0055 (between 0.001 and 0.01), we see that the line drastically lowers down to a roc_auc of about 0.73 and it's highest roc_auc was when the cost-complexity parameter was almost 0.90. Now let's see the roc_auc of our best decision tree.
 
 ```{r}
 decision_roc <- decision_tree %>%
@@ -402,39 +416,13 @@ decision_roc <- decision_tree %>%
 decision_roc
 ```
 
-We see that we have a roc_auc of 0.88673 of our best performing decision tree on the folds! This is higher than our LDA and linear regression!
+We see that we have a roc_auc of 0.88685 of our best performing decision tree on the folds! This is higher than our LDA and linear regression!
 
-Now let's see for nearest neighbors model if it's better than our decision tree.
+Now let's see for boosted tree model if it's better than our decision tree.
 
-### Nearest Neighbor (KNN)
+### Boosted Tree Model
 
-```{r}
-knn_model <- 
-  nearest_neighbor(
-    neighbors = tune(),
-    mode = "classification") %>% 
-  set_engine("kknn")
-
-knn_workflow <- workflow() %>% 
-  add_model(knn_model) %>% 
-  add_recipe(booking_recipe)
-
-# set-up tuning grid ----
-knn_params <- parameters(knn_model)
-param_grid <- grid_regular(cost_complexity(range = c(-3, -1)), levels = 10)
-
-# define grid
-knn_grid <- grid_regular(knn_params, levels = 10)
-
-knn <- tune_grid(
-    knn_workflow,
-    resamples = booking_folds,
-    grid = knn_grid,
-    metrics = metric_set(roc_auc)
-    )
-```
-
-boosted tree model
+First, we must tune our trees and set a workflow for our boosted tree model. Then we set the range for the trees from 200 to 1200. Then we create our model and make an autoplot for it as shown below.
 
 ```{r}
 boost_spec <- boost_tree() %>%
@@ -446,7 +434,7 @@ boost_wf <- workflow() %>%
   add_model(boost_spec) %>%
   add_recipe(booking_recipe) 
 
-param_grid2 <- grid_regular(trees(range = c(10, 2000)), levels = 10)
+param_grid2 <- grid_regular(trees(range = c(200, 1200)), levels = 2)
 
 boosted_tree <- tune_grid(
   boost_wf, 
@@ -457,10 +445,46 @@ boosted_tree <- tune_grid(
 autoplot(boosted_tree)
 ```
 
-drop: company, adults, babies, children, deposit_type, reservation_status_date, total_nights, arrival_date_week_number, stays_in_weekend_nights, arrival_date_month, agent, arrival_date_week_number, stays_in_weekend_nights, arrival_date_month,
+As shown above, it seems that the roc_auc is very close to 0 as it approaches 12500 trees. And if so, this could mean that the boosted tree model is the best model than the previous models.
 
-drop: children, adults, and babies (that are all this at same time)
+```{r}
+boosted_roc <- boosted_tree %>%
+  collect_metrics() %>%
+  arrange(desc(mean)) %>%
+  slice(1)
+boosted_roc
+```
 
-days_in_waiting_list, arrival_date_year, assigned_room_type, booking changes, reservation_status, country,
+As shown here, at tree 12500, we see that our roc_auc is 0.99162, making this our best model.
 
-reservation_status_date (after saving year, month, and day separately), arrival_date_month
+## ROC AUC of Our Models
+
+Let's make tibble that contains all roc_auc of all of our four models.
+
+```{r}
+result <- bind_rows(log_roc, lda_roc, decision_roc, boosted_roc) %>%
+  tibble() %>%
+  mutate(model = c('logistic regression model', 'linear determinant analysis model', 'decision tree model', 'boosted tree model'), 
+         .before = .metric) %>%
+  select(model, .metric, mean, n, std_err) %>%
+  arrange(desc(mean))
+result
+```
+
+Now, we can clearly see that the boosted tree model has the highest roc_auc, meaning our boosted tree model is able to accurately predict 99% of our hotel bookings if it would be canceled or not.
+
+Let's display a barchart to see how far is the difference.
+
+```{r}
+result_chart <- ggplot(result, aes(x = model, y = mean)) +
+  geom_bar(stat = "identity")
+result_chart
+```
+
+We see that boosted tree model is the best model as it's roc_auc is almost to 1 while the other models are below 0.9. Now let's put test our model to our testing dataset.
+
+## Best Model: Boosted Tree Model
+
+Now let's test this model to our testing set!
+
+First, we collect the metrics on our boosted tree model and select the best tree and apply to to our testing model.
