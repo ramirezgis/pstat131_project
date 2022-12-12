@@ -24,7 +24,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ## Introduction
 
-The purpose of this project is to build machine learning models that can accurately predict whether a hotel guest would cancel their hotel booking. The data that would be used is from 'hotel_booking', and I will build different models that would most accurately predict the binary regression problem.
+The purpose of this project is to build machine learning models that can accurately predict whether a hotel guest would cancel their hotel booking. The data that would be used is from '`hotel_booking`', and I will build different models that would most accurately predict the binary regression problem.
 
 ## Hotel Booking Process
 
@@ -41,7 +41,7 @@ In this dataset, we are exploring only two hotels: Resort Hotel and City Hotel, 
 
 ## **Project Roadmap**
 
-\<insert what models were used\>
+I plan to build a logistic regression, linear discriminant analysis (LDA), decision tree, and boosted tree models. I will use roc_auc to compare all four models as roc_auc can provide a visual on how our models can distinguish between canceled and noncancelled hotel booking reservations.
 
 ## Exploratory Data Analysis
 
@@ -342,6 +342,8 @@ log_wkflow <- workflow() %>%
 log_fit <- fit_resamples(log_wkflow, booking_folds)
 ```
 
+Next, we are going to select the best roc_auc among our folds, which in this case was our fifth fold!
+
 ```{r}
 log_roc <- collect_metrics(log_fit) %>%
   arrange(desc(mean)) %>%
@@ -487,4 +489,40 @@ We see that boosted tree model is the best model as it's roc_auc is almost to 1 
 
 Now let's test this model to our testing set!
 
-First, we collect the metrics on our boosted tree model and select the best tree and apply to to our testing model.
+First, we collect the metrics on our boosted tree model and select the best tree (tree 12500) and apply to to our testing model.
+
+```{r}
+final_penalty <- select_best(boosted_tree)
+
+final_tree <- finalize_workflow(boost_wf, final_penalty)
+
+final_fit <- fit(final_tree, data = booking_train)
+
+final_roc_auc <- augment(final_fit, new_data = booking_test) %>%
+  select(is_canceled, starts_with(".pred")) %>%
+  roc_curve(is_canceled, estimate = .pred_0)
+final_roc_auc
+
+autoplot(final_roc_auc)
+```
+
+It has an extremely high roc_auc, which is almost perfect. Meaning there is very little false positives or true positives in this case, which means our boosted tree model was almost able to predict every single hotel booking cancellation in our testing data.
+
+Now let's see the roc_auc for our model:
+
+```{r}
+roc_auc_final <- augment(final_fit, new_data = booking_test) %>%
+  select(is_canceled, starts_with(".pred")) %>%
+  roc_auc(is_canceled, .pred_0)
+roc_auc_final
+```
+
+This has an roc_auc estimate of 0.99339! This is a very high accuracy!
+
+## Conclusions
+
+We started off wondering what are possible predictors that could determine the chances that a person would cancel their hotel booking reservations. After using over 20 predictors to our response variable of is_cancelled, we see that we can predict over 80% of cancellations for all our four models. Our log regression and linear discriminant analysis behaved the most poorly (although above 80%) compared to our other two models, which are decision trees and boosted trees (one almost 90% roc_auc and the latter with almost 100%). I used roc_auc in order to visualize around if our model was able to predict the correct cancellations for our hotel booking by visualizing the true positive rate and false positive rate.
+
+I was not surprised as my most complicated model: boosted tree model took a long time to run and gave the best roc_auc. Next steps would be to explore which predictors were the ones that accurately predicted our hotel booking cancellations.
+
+Overall, the boosted tree model is the best in this case for our binary classification problem.
