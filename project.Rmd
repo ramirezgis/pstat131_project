@@ -338,9 +338,16 @@ log_wkflow <- workflow() %>%
 log_fit <- fit_resamples(log_wkflow, booking_folds)
 ```
 
-We see that log_fit has a roc_auc of BLANK. This is pretty high! Let's see for our next model of linear discrminant analysis.
+```{r}
+collect_metrics(log_fit)
+```
+
+We see that log_fit has a roc_auc of BLANK. This is pretty high! Let's see for our next model of linear discriminant analysis.
+
+### Linear Discriminant Analysis
 
 ```{r}
+control <- control_resamples(save_pred = TRUE)
 lda_mod <- discrim_linear() %>% 
   set_engine("MASS") %>% 
   set_mode("classification")
@@ -350,24 +357,49 @@ lda_wkflow <- workflow() %>%
   add_model(lda_mod)
 
 lda_fit <- fit_resamples(resamples = booking_folds, 
-                         lda_wkflow,  
-                         control = control)
+                         lda_wkflow, control = control)
+collect_metrics(lda_fit)
 ```
 
-We see that lda_fit has a roc_auc of BLANK. Compared to log_reg, this is BLANK. Now let's see for our third model called quadratic discriminant analysis.
+We see that lda_fit has a roc_auc of BLANK. Compared to log_reg, this is BLANK.
+
+### Decision Tree
 
 ```{r}
-qda_mod <- discrim_quad() %>% 
-  set_engine("MASS") %>% 
-  set_mode("classification")
+tree_spec <- decision_tree() %>%
+  set_engine("rpart")
 
-qda_wkflow <- workflow() %>% 
-  add_recipe(booking_recipe) %>% 
-  add_model(qda_mod)
+class_tree_spec <- tree_spec %>%
+  set_mode("classification") %>%
+  set_args(cost_complexity = tune())
 
-qda_fit <- fit_resamples(qda_wkflow, resamples = booking_folds,
-                         control = control)
+class_tree_wf <- workflow() %>%
+  add_model(class_tree_spec) %>%
+  add_recipe(booking_recipe)
+
+param_grid <- grid_regular(cost_complexity(range = c(-3, -1)), levels = 10)
+
+decision_tree <- tune_grid(
+  class_tree_wf,
+  resamples = booking_folds, 
+  grid = param_grid, 
+  metrics = metric_set(roc_auc)
+)
+
+autoplot(decision_tree)
 ```
+
+ANALYZE NOW. Now let's see the roc_auc of our best decision tree.
+
+```{r}
+decision_roc <- decision_tree %>%
+  collect_metrics() %>%
+  arrange(desc(mean)) %>%
+  slice(1)
+decision_roc
+```
+
+We see that we have a roc_auc of 0.88673 of our best performing decision tree on the folds! This is higher than our LDA and linear regression!
 
 drop: company, adults, babies, children, deposit_type, reservation_status_date, total_nights, arrival_date_week_number, stays_in_weekend_nights, arrival_date_month, agent, arrival_date_week_number, stays_in_weekend_nights, arrival_date_month,
 
