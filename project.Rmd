@@ -82,7 +82,7 @@ However, I will only use the variables that I believe are relevant to predicting
 
 ### Libraries and Dataset Cleaning
 
-```{r include=FALSE, results=}
+```{r include=FALSE, results= FALSE}
 library(tidymodels)
 library(tidyverse)
 library(dplyr)
