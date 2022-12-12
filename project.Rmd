@@ -1,11 +1,9 @@
 ---
 title: "Building a Hotel Booking Cancellation Prediction Model"
-subtitle: "Using Machine Learning Models to Predict Whether a Hotel Guest would Cancel their Hotel Booking"
 author: "Giselle Ramirez"
 output: 
   html_document:
     code_folding: hide
-subtitle: "FALL 2022"
 date: "2022-12-06"
 execute:
   message: false
@@ -15,10 +13,6 @@ execute:
 ---
 
 ![]()
-
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-```
 
 ![](images/hotel_booking_pic.jpg)
 
